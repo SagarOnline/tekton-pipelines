@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: tekton-pipeline-git-repo
+spec:
+  type: git
+  params:
+    - name: url
+      value: https://github.com/SagarOnline/tekton-pipelines.git
+      
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+  labels:
+    app: test
+spec:
+  resources:
+    - name: git-repo
+      type: git
+  tasks:
+  
+  # Deploy ConfigMap  
+  - name: run-script
+    taskRef:
+      name: openshift-client
+      kind: ClusterTask
+    resources:
+      inputs:
+      - name: source
+        resource: git-repo
+    params:
+      - name: SCRIPT
+        value: "sh source/script.sh"
+--- 
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: test-pipeline-run
+  labels:
+    app: test
+spec:
+  pipelineRef:
+    name: test-pipeline
+  resources:
+  - name: git-repo
+    resourceRef: 
+      name: tekton-pipeline-git-repo
